@@ -5,15 +5,23 @@ module hazard_detection_unit(
     input logic [4:0] if_id_rs1,
     input logic [4:0] if_id_rs2,
     input logic [4:0] id_ex_rd,
+    input logic id_branch,
     input logic id_ex_mem_read,
     output logic stall
 );
+
     always_comb begin
-        if (id_ex_mem_read && ((id_ex_rd == if_id_rs1) || (id_ex_rd == if_id_rs2)))//load then add/sub....
+        stall = 1'b0;
+
+        // Load-use hazard
+        if (id_ex_mem_read &&
+            !id_branch && 
+            (id_ex_rd != 5'd0) &&
+            ((id_ex_rd == if_id_rs1) ||
+             (id_ex_rd == if_id_rs2)))
             stall = 1'b1;
-        else
-            stall = 1'b0;
     end
+    
 endmodule
 
 // 2. CONTROL UNIT
@@ -24,7 +32,8 @@ module control_unit(
 );
     always_comb begin
         {reg_write, mem_write, mem_read, mem_to_reg, alu_src, branch, alu_op} = 0;
-        case(opcode)
+        case(opcode) 
+        //the bits represent the type of instruction, there is no significanoce of individual bits
             7'b0110011: begin reg_write=1; alu_op=2'b10; end // R-type
             7'b0010011: begin reg_write=1; alu_src=1; alu_op=2'b10; end // I-type
             7'b0000011: begin reg_write=1; mem_read=1; mem_to_reg=1; alu_src=1; alu_op=2'b00; end // LW mem_to_reg needed because you need to write back from memory
@@ -41,22 +50,27 @@ module register_file(
     input logic [31:0] write_data,
     output logic [31:0] rs1_data, rs2_data//these are address where to write in register array,like reg[0]....
 );
-    logic [31:0] regs [31:0];
+    logic [31:0] regs [31:0]; // 32 registers of 32bit
     
-    assign rs1_data = (rs1_addr==0) ? 0 : regs[rs1_addr];
+    //hardcodes data when address is 0 ie x0
+    assign rs1_data = (rs1_addr==0) ? 0 : regs[rs1_addr]; 
     assign rs2_data = (rs2_addr==0) ? 0 : regs[rs2_addr];
     
     always_ff @(posedge clk) begin
-        if (rst) for(int i=0; i<32; i++) regs[i] <= 0;
+        if (rst) for(int i=0; i<32; i++) regs[i] <= 0; //to reset all registers
         else if (reg_write && rd_addr!=0) regs[rd_addr] <= write_data;
+         // only during reg write and with a specific address will this write data
     end
 endmodule
+
+// BNZ, how does it resolved in decode stage
 
 // 4. IMMEDIATE GENERATOR
 module imm_gen(input logic [31:0] instr, output logic [31:0] imm_out);
     always_comb begin
         case(instr[6:0])
             7'b0010011, 7'b0000011: imm_out={{20{instr[31]}}, instr[31:20]}; 
+            // the last bit gets extended 20times,
             7'b0100011: imm_out={{20{instr[31]}}, instr[31:25], instr[11:7]};
             7'b1100011: imm_out={{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
             default: imm_out=0;

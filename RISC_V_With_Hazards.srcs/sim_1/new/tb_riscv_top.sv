@@ -31,7 +31,7 @@ module tb_riscv_top;
         $display("-------------------------------------------------------------");
         
         rst = 1;
-        #20; // Hold reset for 2 clock cycles
+        #10; // Hold reset for 2 clock cycles
         
         rst = 0;
         $display("Reset released. Processor started.");
@@ -58,6 +58,9 @@ module tb_riscv_top;
         // 1. ADDI x1, x0, 10
         // 2. ADDI x2, x0, 5
         // 3. ADD  x3, x1, x2
+        
+        
+        //USING PLUS ARCHS
         
         $display("-------------------------------------------------------------");
         if (uut.regs.regs[3] === 32'd15) begin
