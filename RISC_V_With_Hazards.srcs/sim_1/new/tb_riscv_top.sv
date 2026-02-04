@@ -70,7 +70,7 @@ module tb_riscv_top;
         end
         $display("-------------------------------------------------------------");
 
-        $stop; // Stop simulation
+        #100; $stop; // Stop simulation
     end
 
 endmodule

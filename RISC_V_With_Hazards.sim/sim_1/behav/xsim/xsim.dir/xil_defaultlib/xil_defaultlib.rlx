@@ -3,9 +3,9 @@
 Oct 13 2023
 20:47:58
 E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.sim/sim_1/behav/xsim/glbl.v,1697210495,verilog,,,,glbl,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sim_1/new/tb_riscv_top.sv,1769885244,systemVerilog,,,,tb_riscv_top,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/decode_components.sv,1769896976,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/execute_components.sv,,control_unit;hazard_detection_unit;imm_gen;register_file,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sim_1/new/tb_riscv_top.sv,1769961963,systemVerilog,,,,tb_riscv_top,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/decode_components.sv,1770182265,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/execute_components.sv,,control_unit;hazard_detection_unit;imm_gen;register_file,,uvm,,,,,,
 E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/execute_components.sv,1769774560,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/fetch_components.sv,,alu;alu_control;forwarding_unit,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/fetch_components.sv,1769894242,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/memory_components.sv,,instruction_memory,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/memory_components.sv,1769892279,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/riscv_top.sv,,data_memory,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/riscv_top.sv,1769896267,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sim_1/new/tb_riscv_top.sv,,riscv_top,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/fetch_components.sv,1770145055,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/memory_components.sv,,instruction_memory,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/memory_components.sv,1770148545,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/riscv_top.sv,,data_memory,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/riscv_top.sv,1770183153,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sim_1/new/tb_riscv_top.sv,,riscv_top,,uvm,,,,,,
