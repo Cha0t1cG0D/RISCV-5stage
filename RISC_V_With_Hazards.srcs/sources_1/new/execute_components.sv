@@ -16,7 +16,16 @@ module forwarding_unit(
 
 // Inputs : Two from ID/EX, the rd from EX/MM, the rd from MM/WB
 
-
+    // Pre-compute match conditions as intermediate signals
+    logic ex_rs1_match, ex_rs2_match;
+    logic mem_rs1_match, mem_rs2_match;
+    
+    // Pre-computation happens in parallel (reduces timing path)
+    assign ex_rs1_match = (ex_mem_rd != 0) && (ex_mem_rd == id_ex_rs1);
+    assign ex_rs2_match = (ex_mem_rd != 0) && (ex_mem_rd == id_ex_rs2);
+    assign mem_rs1_match = (mem_wb_rd != 0) && (mem_wb_rd == id_ex_rs1);
+    assign mem_rs2_match = (mem_wb_rd != 0) && (mem_wb_rd == id_ex_rs2);
+    
 //Outputs: forward_a and forward_b, controls the ALU input
 // forces the data from the MEM/WB into the alu rather than the normal flow, basically a mux switch 
  
@@ -27,18 +36,18 @@ module forwarding_unit(
         // ahead instruction is writing to the register which is needed right now
         
         //ex_mem_reg_write and ex_mem_rd comes from the forward module
-        if (ex_mem_reg_write && (ex_mem_rd != 0) && (ex_mem_rd == id_ex_rs1)) forward_a = 2'b10; //if memory rd matches r1
-        if (ex_mem_reg_write && (ex_mem_rd != 0) && (ex_mem_rd == id_ex_rs2)) forward_b = 2'b10; //if memory rd matches rs2
-        
         // MEM Hazard
         // if the instruction which is two cycles ahead is writing to a register, which is currently needed
         
         // we have a double hazard check, so the two cycle ahead and one cycle ahead are not writing to the same register
-        if (mem_wb_reg_write && (mem_wb_rd != 0) && (mem_wb_rd == id_ex_rs1) && 
-           !(ex_mem_reg_write && (ex_mem_rd != 0) && (ex_mem_rd == id_ex_rs1))) forward_a = 2'b01;
+           
+        // Default: MEM forwarding (lower priority)
+        forward_a = (mem_wb_reg_write && mem_rs1_match) ? 2'b01 : 2'b00;
+        forward_b = (mem_wb_reg_write && mem_rs2_match) ? 2'b01 : 2'b00;
         
-        if (mem_wb_reg_write && (mem_wb_rd != 0) && (mem_wb_rd == id_ex_rs2) && 
-           !(ex_mem_reg_write && (ex_mem_rd != 0) && (ex_mem_rd == id_ex_rs2))) forward_b = 2'b01;
+        // Override with EX forwarding if applicable (higher priority)
+        if (ex_mem_reg_write && ex_rs1_match) forward_a = 2'b10;
+        if (ex_mem_reg_write && ex_rs2_match) forward_b = 2'b10;
     end
 endmodule
 

@@ -175,30 +175,30 @@ module riscv_top(
             id_rs1_data_fwd = id_rs1_data;
         end
     end
-           
-         
-// Forward rs2 (same logic)
-always_comb begin
-    // Priority 1: Load data from MEM stage
-    if (ex_mem_reg_write && ex_mem_mem_to_reg && (ex_mem_rd != 0) && 
-        (ex_mem_rd == if_id_instr[24:20])) begin
-        id_rs2_data_fwd = mem_read_data;
+               
+             
+    // Forward rs2 (same logic)
+    always_comb begin
+        // Priority 1: Load data from MEM stage
+        if (ex_mem_reg_write && ex_mem_mem_to_reg && (ex_mem_rd != 0) && 
+            (ex_mem_rd == if_id_instr[24:20])) begin
+            id_rs2_data_fwd = mem_read_data;
+        end
+        // Priority 2: ALU result from EX/MEM
+        else if (ex_mem_reg_write && (ex_mem_rd != 0) && 
+                 (ex_mem_rd == if_id_instr[24:20])) begin
+            id_rs2_data_fwd = ex_mem_alu_result;
+        end
+        // Priority 3: Any result from MEM/WB
+        else if (mem_wb_reg_write && (mem_wb_rd != 0) && 
+                 (mem_wb_rd == if_id_instr[24:20])) begin
+            id_rs2_data_fwd = wb_write_data;
+        end
+        // Default: Use register file
+        else begin
+            id_rs2_data_fwd = id_rs2_data;
+        end
     end
-    // Priority 2: ALU result from EX/MEM
-    else if (ex_mem_reg_write && (ex_mem_rd != 0) && 
-             (ex_mem_rd == if_id_instr[24:20])) begin
-        id_rs2_data_fwd = ex_mem_alu_result;
-    end
-    // Priority 3: Any result from MEM/WB
-    else if (mem_wb_reg_write && (mem_wb_rd != 0) && 
-             (mem_wb_rd == if_id_instr[24:20])) begin
-        id_rs2_data_fwd = wb_write_data;
-    end
-    // Default: Use register file
-    else begin
-        id_rs2_data_fwd = id_rs2_data;
-    end
-end
                   
     // ID/EX Pipeline Register
     always_ff @(posedge clk) begin
