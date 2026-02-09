@@ -83,7 +83,7 @@ module alu_control(
         else if(alu_op==2'b01) alu_ctrl=4'b0110; // SUB
         else begin
             case(func3)
-            3'b000: alu_ctrl=(func7[5])? 4'b0110:4'b0010;//Sub Add have same func3 so func7[5] differentiate it
+            3'b000: alu_ctrl=(func7 == 7'b0100000)? 4'b0110:4'b0010;//Sub Add have same func3 so func7[5] differentiate it
             3'b111: alu_ctrl=4'b0000; //bitwise AND
             3'b110: alu_ctrl=4'b0001; //bitwise OR
             default: alu_ctrl=4'b0000;

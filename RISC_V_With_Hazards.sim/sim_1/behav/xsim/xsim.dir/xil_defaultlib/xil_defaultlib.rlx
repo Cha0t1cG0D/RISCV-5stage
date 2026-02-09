@@ -2,10 +2,10 @@
 2020.2
 Oct 13 2023
 20:47:58
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.sim/sim_1/behav/xsim/glbl.v,1697210495,verilog,,,,glbl,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.sim/sim_1/behav/xsim/glbl.v,1770540793,verilog,,,,glbl,,uvm,,,,,,
 E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sim_1/new/tb_riscv_top.sv,1769961963,systemVerilog,,,,tb_riscv_top,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/decode_components.sv,1770382464,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/execute_components.sv,,control_unit;hazard_detection_unit;imm_gen;register_file,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/execute_components.sv,1770381189,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/fetch_components.sv,,alu;alu_control;forwarding_unit,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/fetch_components.sv,1770145055,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/memory_components.sv,,instruction_memory,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/memory_components.sv,1770148545,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/riscv_top.sv,,data_memory,,uvm,,,,,,
-E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/riscv_top.sv,1770382959,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sim_1/new/tb_riscv_top.sv,,riscv_top,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/decode_components.sv,1770567230,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/execute_components.sv,,control_unit;hazard_detection_unit;imm_gen;register_file,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/execute_components.sv,1770551128,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/fetch_components.sv,,alu;alu_control;forwarding_unit,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/fetch_components.sv,1770611964,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/memory_components.sv,,instruction_memory,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/memory_components.sv,1770554297,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/riscv_top.sv,,data_memory,,uvm,,,,,,
+E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sources_1/new/riscv_top.sv,1770625154,systemVerilog,,E:/Xilinx/Projects/RISC_V_With_Hazards/RISC_V_With_Hazards.srcs/sim_1/new/tb_riscv_top.sv,,riscv_top,,uvm,,,,,,

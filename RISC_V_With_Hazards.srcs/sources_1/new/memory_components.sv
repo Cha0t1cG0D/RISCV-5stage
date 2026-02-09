@@ -6,7 +6,7 @@ module data_memory(
     input logic [2:0] load_type,
     output logic [31:0] read_data
 );
-    logic [31:0] mem [255:0];
+    logic [31:0] mem [0:255];
     logic [31:0] word_data;
     logic [15:0] halfword;
     logic [7:0] byte_data;
@@ -15,6 +15,8 @@ module data_memory(
     
     always_comb begin
         read_data = 32'b0;
+        byte_data = 8'b0;
+        halfword = 16'b0;
         
         if (mem_read) begin
             case(load_type)
@@ -24,6 +26,7 @@ module data_memory(
                         2'b01: byte_data = word_data[15:8];
                         2'b10: byte_data = word_data[23:16];
                         2'b11: byte_data = word_data[31:24];
+                        default: byte_data = 8'b0;
                    endcase
                    read_data = {{24{byte_data[7]}}, byte_data};
                end
@@ -32,6 +35,7 @@ module data_memory(
                     case(addr[1])
                         1'b0: halfword = word_data[15:0];
                         1'b1: halfword = word_data[31:16];
+                        default: halfword = 16'b0;
                     endcase
                     read_data = {{16{halfword[15]}}, halfword};
                end
@@ -44,6 +48,7 @@ module data_memory(
                         2'b01: byte_data = word_data[15:8];
                         2'b10: byte_data = word_data[23:16];
                         2'b11: byte_data = word_data[31:24];
+                        default: byte_data = 8'b0;
                     endcase
                     read_data = {24'b0, byte_data};
                 end
@@ -52,6 +57,7 @@ module data_memory(
                     case(addr[1])
                         1'b0: halfword = word_data[15:0];
                         1'b1: halfword = word_data[31:16];
+                        default: halfword = 16'b0;
                     endcase
                     read_data = {16'b0,halfword};
                 end
