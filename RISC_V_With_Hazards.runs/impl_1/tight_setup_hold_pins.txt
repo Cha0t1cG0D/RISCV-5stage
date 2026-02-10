@@ -454,8 +454,8 @@
 | sys_clk_pin        | sys_clk_pin       | dmem/mem_reg_0_255_16_16/RAMS64E_C/ADR0 |
 | sys_clk_pin        | sys_clk_pin       | dmem/mem_reg_0_255_29_29/RAMS64E_D/ADR2 |
 | sys_clk_pin        | sys_clk_pin       | id_ex_alu_src_reg/D                     |
-| sys_clk_pin        | sys_clk_pin       | dmem/mem_reg_0_255_30_30/RAMS64E_C/ADR4 |
 | sys_clk_pin        | sys_clk_pin       | dmem/mem_reg_0_255_29_29/RAMS64E_A/ADR4 |
+| sys_clk_pin        | sys_clk_pin       | dmem/mem_reg_0_255_30_30/RAMS64E_C/ADR4 |
 | sys_clk_pin        | sys_clk_pin       | dmem/mem_reg_0_255_14_14/RAMS64E_D/ADR5 |
 | sys_clk_pin        | sys_clk_pin       | dmem/mem_reg_0_255_7_7/RAMS64E_D/ADR5   |
 | sys_clk_pin        | sys_clk_pin       | dmem/mem_reg_0_255_27_27/RAMS64E_C/ADR4 |
