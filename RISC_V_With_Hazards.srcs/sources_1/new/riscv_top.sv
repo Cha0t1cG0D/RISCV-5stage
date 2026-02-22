@@ -1,13 +1,14 @@
 `timescale 1ns / 1ps
 
-module riscv_top(
+    module riscv_top(
     input logic clk,
     input logic rst,
     output logic [3:0] led
 );
     // --- WIRES & INTERCONNECTS ---
-    logic stall, flush;
-    logic flush_id_ex,flush_if_id;
+    (* max_fanout = 16 *) logic stall;
+    logic flush;
+    (* max_fanout = 8 *) logic flush_id_ex,flush_if_id;
     //for hazards
     
     
@@ -20,31 +21,39 @@ module riscv_top(
      
 // ID Signals
     logic [31:0] id_rs1_data, id_rs2_data, id_imm;
+    logic [31:0] id_branch_target;
     logic id_reg_write, id_mem_write, id_mem_read, id_mem_to_reg, id_alu_src,id_branch;
     logic [1:0] id_alu_op;
-    logic id_jal, id_jalr;
+    logic id_jal, id_jalr, id_lui, id_aupic, id_is_rtype;
     logic [2:0] id_load_type;
+    logic [2:0] id_store_type;
     logic [31:0] id_rs1_data_fwd, id_rs2_data_fwd;
+    
+    logic [31:0] rs1_fwd_mem, rs1_fwd_wb, rs2_fwd_mem, rs2_fwd_wb;
+    logic rs1_hazard_mem, rs1_hazard_wb, rs2_hazard_mem, rs2_hazard_wb;
+    logic rs1_load_hazard, rs2_load_hazard;
     
     // Muxed Control Signals (For Stalling)
     logic c_reg_write, c_mem_write, c_mem_read, c_mem_to_reg, c_alu_src, c_branch;
     logic [1:0] c_alu_op;
-    logic c_jal, c_jalr;
+    logic c_jal, c_jalr, c_lui, c_auipc, c_is_rtype;
     logic [2:0] c_load_type;
+    logic [2:0] c_store_type;
 
 
  
 // ID/EX Pipeline Regs
     logic [31:0] id_ex_pc, id_ex_rs1, id_ex_rs2, id_ex_imm;
+    logic [31:0] id_ex_br_target;
     logic [4:0]  id_ex_rd, id_ex_rs1_addr, id_ex_rs2_addr;
     logic [2:0]  id_ex_func3;
     logic [6:0]  id_ex_func7;
     logic        id_ex_reg_write, id_ex_mem_write, id_ex_mem_read, id_ex_mem_to_reg, id_ex_alu_src, id_ex_branch;
     logic [1:0]  id_ex_alu_op;
-    logic id_ex_jal, id_ex_jalr;
+    logic id_ex_jal, id_ex_jalr, id_ex_lui, id_ex_auipc, id_ex_is_rtype;
     logic [2:0] id_ex_load_type;
+    logic [2:0] id_ex_store_type;
     logic [31:0] id_ex_pc_plus4, ex_mem_pc_plus4, mem_wb_pc_plus4;
-    logic ex_mem_jal, ex_mem_jalr, mem_wb_jal, mem_wb_jalr;
 
 // EX Signals
     logic [31:0] ex_alu_result;
@@ -55,10 +64,14 @@ module riscv_top(
     logic [31:0] store_data_fwd;
 
 // EX/MEM Pipeline Regs
-    logic [31:0] ex_mem_alu_result, ex_mem_rs2;
+    logic [31:0] ex_mem_alu_result;
+    logic [31:0] ex_mem_rs2; 
     logic [4:0]  ex_mem_rd;
     logic        ex_mem_reg_write, ex_mem_mem_write, ex_mem_mem_read, ex_mem_mem_to_reg;
-    logic [2:0] ex_mem_load_type;
+    logic [2:0]  ex_mem_load_type;
+    logic [2:0]  ex_mem_store_type;
+    logic ex_mem_jal, ex_mem_jalr, ex_mem_lui, ex_mem_auipc;
+    logic ex_mem_fwd_rs1_match, ex_mem_fwd_rs2_match;
     
 // MEM Signals
     logic [31:0] mem_read_data;
@@ -67,82 +80,75 @@ module riscv_top(
     logic [31:0] mem_wb_read_data, mem_wb_alu_result;
     logic [4:0]  mem_wb_rd;
     logic        mem_wb_reg_write, mem_wb_mem_to_reg;
+    logic        mem_wb_jal, mem_wb_jalr, mem_wb_lui, mem_wb_auipc;
+    logic        mem_wb_fwd_rs1_match, mem_wb_fwd_rs2_match;
     
 // WB Signals
     logic [31:0] wb_write_data;
 
 
     logic [31:0] jump_target, branch_target;
+    logic id_jump, ex_branch_taken;
 
 
-    // ================= STAGE 1: FETCH =================
-    assign if_pc_plus4 = if_pc + 4;
-//runs the instructions in serial order,
-    instruction_memory imem ( .clk(clk),.rst(rst),.stall(stall),.pc_next(if_pc_next),.pc(if_pc), .instruction(if_instr) ); //fetches the instruction from the instruction memory
+// ================= STAGE 1: FETCH =================
 
+    // PC Register
+    always_ff @(posedge clk) begin
+        if (rst) 
+            if_pc <= 32'h00000000;
+        else if (!stall) 
+            if_pc <= if_pc_next;
+    end
+    
+    // PC+4 Calculation
+    assign if_pc_plus4 = if_pc + 32'd4;
+    
+    // Next PC Mux: Branch > Jump > Sequential
+    assign if_pc_next = ex_branch_taken ? id_ex_br_target :
+                        id_jump         ? jump_target :
+                                          if_pc_plus4;
+    
+    // Instruction Memory (combinational, no clock/reset)
+    instruction_memory imem (
+        .pc(if_pc),            
+        .instruction(if_instr)
+    );
+    
     // IF/ID Pipeline Register
     always_ff @(posedge clk) begin
         if (rst || flush_if_id) begin 
-            if_id_pc <= 0; if_id_instr <= 0;
-        // when branch occurs, the instruction is flushed
+            if_id_pc    <= 32'h0;
+            if_id_instr <= 32'h0;
         end else if (!stall) begin
-            if_id_pc <= if_pc; if_id_instr <= if_instr;
-        //for stalling, we don't move the IF instruction through to instruction decode,
-        // we rerun it for few cycles
+            if_id_pc    <= if_pc;
+            if_id_instr <= if_instr;
         end
     end
-
-
-    logic id_jump, ex_branch_taken;
-    logic [31:0] pc_after_jump;  // NEW intermediate signal
     
-    // Stage 1: Jump handling (2-input mux)
-    assign pc_after_jump = id_jump ? jump_target : if_pc_plus4;
+// ================= STAGE 2: DECODE =================
     
-    // Stage 2: Branch handling (2-input mux)
-    assign if_pc_next = ex_branch_taken ? branch_target : pc_after_jump;
+    imm_gen ig ( .instr(if_id_instr), .imm_out(id_imm) );
     
     
-    // ================= STAGE 2: DECODE =================
-    
-hazard_detection_unit hdu (
-        .if_id_rs1(if_id_instr[19:15]),
-        .if_id_rs2(if_id_instr[24:20]),
-        .if_id_pc(if_id_pc),
-        .if_id_imm(id_imm),
-        .if_rs1_data_fwd(id_rs1_data_fwd),
-        .if_rs2_data_fwd(id_rs2_data_fwd),
-        .if_id_branch(id_branch),
-        .if_id_jal(id_jal),
-        .if_id_jalr(id_jalr),
-        .id_ex_rd(id_ex_rd),
-        .id_ex_mem_read(id_ex_mem_read),
-        .id_ex_func3(id_ex_func3),
-        .id_ex_branch(id_ex_branch),
-        .ex_alu_result(ex_alu_result),
-        .ex_zero(ex_zero),
-        .ex_alu_src_a(alu_src_a_fwd),
-        .ex_alu_src_b(alu_src_b_fwd),
-        .id_ex_pc(id_ex_pc),
-        .id_ex_imm(id_ex_imm),
-        .stall(stall),
-        .flush(flush),
-        .jump_target(jump_target),
-        .branch_target(branch_target),
-        .id_jump(id_jump),
-        .ex_branch_taken(ex_branch_taken),
-        .flush_if_id(flush_if_id),
-        .flush_id_ex(flush_id_ex)
-    );
-
     control_unit ctrl (
-        .opcode(if_id_instr[6:0]),.funct3(if_id_instr[14:12]),
+        .opcode(if_id_instr[6:0]),.func3(if_id_instr[14:12]),
         .reg_write(id_reg_write), .mem_write(id_mem_write), .mem_read(id_mem_read),
         .mem_to_reg(id_mem_to_reg), .alu_src(id_alu_src), .branch(id_branch),
-         .alu_op(id_alu_op),.jal(id_jal), .jalr(id_jalr),
-        .load_type(id_load_type)
+        .alu_op(id_alu_op),.jal(id_jal), .jalr(id_jalr),
+        .lui(id_lui),.auipc(id_auipc),.is_rtype(id_is_rtype),  
+        .load_type(id_load_type),.store_type(id_store_type)
     );
 
+    // ===== HAZARD UNIT =====
+    hazard_unit hu (
+        .if_id_rs1(if_id_instr[19:15]),
+        .if_id_rs2(if_id_instr[24:20]),
+        .id_ex_rd(id_ex_rd),
+        .id_ex_mem_read(id_ex_mem_read),
+        .stall(stall)
+    );
+    
     // Stall Logic (Muxing control signals to 0)
     assign c_reg_write  = (stall) ? 1'b0 : id_reg_write;
     assign c_mem_write  = (stall) ? 1'b0 : id_mem_write;
@@ -154,21 +160,24 @@ hazard_detection_unit hdu (
     assign c_jal        = (stall) ? 1'b0 : id_jal;
     assign c_jalr       = (stall) ? 1'b0 : id_jalr;
     assign c_load_type  = (stall) ? 3'b010 : id_load_type;  // (default to LW)
-
-    register_file regs (
-        .clk(clk), .rst(rst), .reg_write(mem_wb_reg_write),
-        .rs1_addr(if_id_instr[19:15]), .rs2_addr(if_id_instr[24:20]), .rd_addr(mem_wb_rd),
-        .write_data(wb_write_data), .rs1_data(id_rs1_data), .rs2_data(id_rs2_data)
+    assign c_store_type = (stall) ? 3'b010 : id_store_type;
+    assign c_lui        = (stall) ? 1'b0 : id_lui;
+    assign c_auipc      = (stall) ? 1'b0 : id_auipc;
+    assign c_is_rtype   = (stall) ? 1'b0 : id_is_rtype;
+        
+    // ===== JUMP UNIT (ID STAGE) =====
+    jump_unit ju (
+        .if_id_jal(id_jal),
+        .if_id_jalr(id_jalr),
+        .if_id_pc(if_id_pc),
+        .if_id_imm(id_imm),
+        .rs1_data_fwd(id_rs1_data_fwd),
+        .stall(stall),
+        .jump_taken(id_jump),
+        .jump_target(jump_target)
     );
 
-    imm_gen ig ( .instr(if_id_instr), .imm_out(id_imm) );
-
     // ID STAGE FORWARDING
-
-    logic [31:0] rs1_fwd_mem, rs1_fwd_wb, rs2_fwd_mem, rs2_fwd_wb;
-    logic rs1_hazard_mem, rs1_hazard_wb, rs2_hazard_mem, rs2_hazard_wb;
-    logic rs1_load_hazard, rs2_load_hazard;
-    
     // Detect hazards (separate from data selection)
     assign rs1_hazard_mem = ex_mem_reg_write && (ex_mem_rd != 0) && 
                             (ex_mem_rd == if_id_instr[19:15]);
@@ -194,23 +203,38 @@ hazard_detection_unit hdu (
     assign id_rs1_data_fwd = rs1_load_hazard ? mem_read_data : rs1_fwd_wb;
     assign id_rs2_data_fwd = rs2_load_hazard ? mem_read_data : rs2_fwd_wb;
     
-                  
+    assign id_branch_target = if_id_pc + id_imm;
+        
+    register_file regs (
+        .clk(clk), .rst(rst), .reg_write(mem_wb_reg_write),
+        .rs1_addr(if_id_instr[19:15]), .rs2_addr(if_id_instr[24:20]), .rd_addr(mem_wb_rd),
+        .write_data(wb_write_data), .rs1_data(id_rs1_data), .rs2_data(id_rs2_data)
+    );
+          
     // ID/EX Pipeline Register
     always_ff @(posedge clk) begin
         if (rst || flush_id_ex ) begin // Flush
-            {id_ex_reg_write, id_ex_mem_write, id_ex_mem_read, id_ex_mem_to_reg, id_ex_branch, id_ex_jal, id_ex_jalr} <= 7'b0;
+            {id_ex_reg_write, id_ex_mem_write, id_ex_mem_read, id_ex_mem_to_reg,
+            id_ex_branch, id_ex_jal, id_ex_jalr,id_ex_lui,id_ex_auipc,id_ex_is_rtype} <= 0;
              id_ex_rd <= 0; id_ex_rs1_addr <= 0; id_ex_rs2_addr <= 0;
              id_ex_load_type <= 3'b010;
+             id_ex_br_target <= 0;
+             id_ex_store_type <= 3'b010;
         end else begin //data path transfer
             id_ex_pc <= if_id_pc;
-            id_ex_rs1 <= id_rs1_data_fwd;  // ? USE FORWARDED DATA
-            id_ex_rs2 <= id_rs2_data_fwd;  // ? USE FORWARDED DATA
+            id_ex_rs1 <= id_rs1_data_fwd;  // USE FORWARDED DATA
+            id_ex_rs2 <= id_rs2_data_fwd;  // USE FORWARDED DATA
             id_ex_imm <= id_imm;
+            id_ex_lui <= c_lui;
+            id_ex_auipc <= c_auipc;
+            id_ex_is_rtype <= c_is_rtype;
+            id_ex_br_target <= id_branch_target;
             id_ex_rd <= if_id_instr[11:7]; 
             id_ex_rs1_addr <= if_id_instr[19:15]; id_ex_rs2_addr <= if_id_instr[24:20];
             id_ex_func3 <= if_id_instr[14:12]; id_ex_func7 <= if_id_instr[31:25];
             
             id_ex_load_type <= c_load_type;
+            id_ex_store_type <= c_store_type;
             id_ex_jal <= c_jal;             
             id_ex_jalr <= c_jalr;         
             id_ex_pc_plus4 <= if_id_pc + 4;  
@@ -223,14 +247,26 @@ hazard_detection_unit hdu (
     end
 
 
-    // ================= STAGE 3: EXECUTE =================
-    forwarding_unit fwd (
-        .id_ex_rs1(id_ex_rs1_addr), .id_ex_rs2(id_ex_rs2_addr),
-        .ex_mem_rd(ex_mem_rd), .ex_mem_reg_write(ex_mem_reg_write),
-        .mem_wb_rd(mem_wb_rd), .mem_wb_reg_write(mem_wb_reg_write),
-        .forward_a(forward_a), .forward_b(forward_b)
-    );
+// ================= STAGE 3: EXECUTE =================
 
+
+    //exactly after decode
+    assign ex_mem_fwd_rs1_match = (ex_mem_rd == id_ex_rs1_addr) && (ex_mem_rd != 0);
+    assign ex_mem_fwd_rs2_match = (ex_mem_rd == id_ex_rs2_addr) && (ex_mem_rd != 0);
+    assign mem_wb_fwd_rs1_match = (mem_wb_rd == id_ex_rs1_addr) && (mem_wb_rd != 0);
+    assign mem_wb_fwd_rs2_match = (mem_wb_rd == id_ex_rs2_addr) && (mem_wb_rd != 0);
+    
+    forwarding_unit fwd (
+        .ex_mem_fwd_rs1_match(ex_mem_fwd_rs1_match),
+        .ex_mem_fwd_rs2_match(ex_mem_fwd_rs2_match),
+        .ex_mem_reg_write(ex_mem_reg_write),
+        .mem_wb_fwd_rs1_match(mem_wb_fwd_rs1_match),
+        .mem_wb_fwd_rs2_match(mem_wb_fwd_rs2_match),
+        .mem_wb_reg_write(mem_wb_reg_write),
+        .forward_a(forward_a),
+        .forward_b(forward_b)
+    );
+       
 //Resolving the RAW Hazard (Read After Write) without stalling
     assign alu_src_a_fwd = (forward_a == 2'b10) ? ex_mem_alu_result : //Ex Hazard
                            (forward_a == 2'b01) ? wb_write_data : id_ex_rs1; //Mem Hazard
@@ -241,7 +277,6 @@ hazard_detection_unit hdu (
 // where rs1 and rs2 are input operands
 
 //rs1 and rs2 are compared for branch instruction
-
     assign alu_src_b_final =
         (id_ex_branch) ? alu_src_b_fwd :
         (id_ex_alu_src) ? id_ex_imm :
@@ -251,31 +286,71 @@ hazard_detection_unit hdu (
         (forward_b == 2'b10) ? ex_mem_alu_result :   // EX/MEM forward
         (forward_b == 2'b01) ? wb_write_data    :   // MEM/WB forward
                                id_ex_rs2;           // normal rs2
-    
-    alu_control alu_c ( .alu_op(id_ex_alu_op), .func3(id_ex_func3), .func7(id_ex_func7), .alu_ctrl(ex_alu_ctrl) );
-    alu alu_main ( .src_a(alu_src_a_fwd), .src_b(alu_src_b_final), .alu_ctrl(ex_alu_ctrl), .alu_result(ex_alu_result), .zero(ex_zero) );
 
+// ===== LUI/AUIPC DATAPATH =====
+
+//20 bit operations
+    logic [31:0] alu_src_a_final, alu_src_b_adjusted;
     
+    // For AUIPC: use PC as src_a, for others use forwarded rs1
+    assign alu_src_a_final = id_ex_auipc ? id_ex_pc : alu_src_a_fwd;
+    
+    // For LUI/AUIPC: use immediate directly as src_b
+    assign alu_src_b_adjusted = (id_ex_lui || id_ex_auipc) ? id_ex_imm : alu_src_b_final;
+   
+// ===== ALU Operations =====
+    
+    alu_control alu_c ( .alu_op(id_ex_alu_op), .func3(id_ex_func3),
+    .func7(id_ex_func7), .alu_ctrl(ex_alu_ctrl),.is_rtype(id_ex_is_rtype));
+    
+    alu alu_main ( .src_a(alu_src_a_final), .src_b(alu_src_b_adjusted),
+     .alu_ctrl(ex_alu_ctrl), .alu_result(ex_alu_result), .zero(ex_zero) );
+    
+            
+    // ===== BRANCH UNIT (EX STAGE, COMBINATIONAL) =====
+    
+    branch_unit bru (
+        .id_ex_branch(id_ex_branch),
+        .id_ex_func3(id_ex_func3),
+        .rs1(alu_src_a_fwd),
+        .rs2(alu_src_b_fwd),
+        .branch_taken(ex_branch_taken)
+    );
+    
+    // ===== FLUSH UNIT =====
+    flush_unit fu (
+        .branch_taken(ex_branch_taken),
+        .jump_taken(id_jump),
+        .flush_if_id(flush_if_id),
+        .flush_id_ex(flush_id_ex)
+    );
     
     // EX/MEM Pipeline Register
     always_ff @(posedge clk) begin
         if (rst) begin
-            {ex_mem_reg_write, ex_mem_mem_write, ex_mem_mem_read, ex_mem_mem_to_reg } <= 0;
+            {ex_mem_reg_write, ex_mem_mem_write, ex_mem_mem_read, ex_mem_mem_to_reg} <= 0;
             ex_mem_rd <= 0;
             ex_mem_jal <= 0;
             ex_mem_jalr <= 0;
+            ex_mem_lui <= 0;
+            ex_mem_auipc <= 0;
             ex_mem_load_type <= 3'b010;
+            ex_mem_store_type <= 3'b010;
         end else begin
             ex_mem_pc_plus4 <= id_ex_pc_plus4;
             ex_mem_jal <= id_ex_jal;
             ex_mem_jalr <= id_ex_jalr;
             ex_mem_alu_result <= ex_alu_result;
-            ex_mem_rs2 <= store_data_fwd; 
+            ex_mem_rs2 <= store_data_fwd;
             ex_mem_rd <= id_ex_rd;
             ex_mem_load_type <= id_ex_load_type;
-            
-            ex_mem_reg_write <= id_ex_reg_write; ex_mem_mem_write <= id_ex_mem_write;
-            ex_mem_mem_read <= id_ex_mem_read;   ex_mem_mem_to_reg <= id_ex_mem_to_reg;
+            ex_mem_store_type <= id_ex_store_type;
+            ex_mem_lui <= id_ex_lui;
+            ex_mem_auipc <= id_ex_auipc;
+            ex_mem_reg_write <= id_ex_reg_write;
+            ex_mem_mem_write <= id_ex_mem_write;
+            ex_mem_mem_read <= id_ex_mem_read;
+            ex_mem_mem_to_reg <= id_ex_mem_to_reg;
         end
     end
 
@@ -284,7 +359,8 @@ hazard_detection_unit hdu (
 
     data_memory dmem (
         .clk(clk), .mem_write(ex_mem_mem_write), .mem_read(ex_mem_mem_read),
-        .addr(ex_mem_alu_result),.load_type(ex_mem_load_type), .write_data(ex_mem_rs2), .read_data(mem_read_data)
+        .addr(ex_mem_alu_result),.load_type(ex_mem_load_type),.store_type(ex_mem_store_type),
+         .write_data(ex_mem_rs2), .read_data(mem_read_data)
     );
 
     // MEM/WB Pipeline Register
@@ -294,6 +370,8 @@ hazard_detection_unit hdu (
             mem_wb_rd <= 0;
             mem_wb_jal <= 0;
             mem_wb_jalr <= 0;
+            mem_wb_lui <= 0;
+            mem_wb_auipc <= 0;
         end else begin
             mem_wb_pc_plus4 <= ex_mem_pc_plus4;
             mem_wb_jal <= ex_mem_jal;
@@ -301,15 +379,20 @@ hazard_detection_unit hdu (
             mem_wb_read_data <= mem_read_data;
             mem_wb_alu_result <= ex_mem_alu_result;
             mem_wb_rd <= ex_mem_rd;
+            mem_wb_lui <= ex_mem_lui;
+            mem_wb_auipc <= ex_mem_auipc;
+            
             mem_wb_reg_write <= ex_mem_reg_write;
             mem_wb_mem_to_reg <= ex_mem_mem_to_reg;
+            
         end
-    end
+    end 
 
 
     // ================= STAGE 5: WRITEBACK =================
     assign wb_write_data = (mem_wb_jal | mem_wb_jalr) ? mem_wb_pc_plus4 :
-                       (mem_wb_mem_to_reg) ? mem_wb_read_data : 
-                       mem_wb_alu_result;
+                           (mem_wb_mem_to_reg) ? mem_wb_read_data : 
+                           mem_wb_alu_result;  // Includes LUI/AUIPC results
+
     assign led = if_pc[5:2];
 endmodule

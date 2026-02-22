@@ -12,14 +12,14 @@
    </db_ref_list>
    <zoom_setting>
       <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="209.248 ns"></ZoomEndTime>
-      <Cursor1Time time="45.000 ns"></Cursor1Time>
+      <ZoomEndTime time="300.001 ns"></ZoomEndTime>
+      <Cursor1Time time="233.551 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="188"></NameColumnWidth>
+      <NameColumnWidth column_width="158"></NameColumnWidth>
       <ValueColumnWidth column_width="72"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="39" />
+   <WVObjectSize size="40" />
    <wvobject fp_name="/tb_riscv_top/clk" type="logic">
       <obj_property name="ElementShortName">clk</obj_property>
       <obj_property name="ObjectShortName">clk</obj_property>
@@ -37,18 +37,6 @@
       <obj_property name="ElementShortName">if_instr[31:0]</obj_property>
       <obj_property name="ObjectShortName">if_instr[31:0]</obj_property>
       <obj_property name="CustomSignalColor">#FFFF00</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_riscv_top/uut/hdu/if_id_rs1" type="array">
-      <obj_property name="ElementShortName">if_id_rs1[4:0]</obj_property>
-      <obj_property name="ObjectShortName">if_id_rs1[4:0]</obj_property>
-      <obj_property name="CustomSignalColor">#00FF00</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_riscv_top/uut/hdu/if_id_rs2" type="array">
-      <obj_property name="ElementShortName">if_id_rs2[4:0]</obj_property>
-      <obj_property name="ObjectShortName">if_id_rs2[4:0]</obj_property>
-      <obj_property name="CustomSignalColor">#00FF00</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_riscv_top/uut/if_id_instr" type="array">
@@ -81,10 +69,6 @@
       <obj_property name="ElementShortName">imm_out[31:0]</obj_property>
       <obj_property name="ObjectShortName">imm_out[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb_riscv_top/uut/hdu/stall" type="logic">
-      <obj_property name="ElementShortName">stall</obj_property>
-      <obj_property name="ObjectShortName">stall</obj_property>
-   </wvobject>
    <wvobject fp_name="/tb_riscv_top/uut/id_alu_op" type="array">
       <obj_property name="ElementShortName">id_alu_op[1:0]</obj_property>
       <obj_property name="ObjectShortName">id_alu_op[1:0]</obj_property>
@@ -92,22 +76,41 @@
       <obj_property name="CustomSignalColor">#00FF00</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb_riscv_top/uut/hdu/id_ex_mem_read" type="logic">
-      <obj_property name="ElementShortName">id_ex_mem_read</obj_property>
-      <obj_property name="ObjectShortName">id_ex_mem_read</obj_property>
+   <wvobject fp_name="/tb_riscv_top/uut/stall" type="logic">
+      <obj_property name="ElementShortName">stall</obj_property>
+      <obj_property name="ObjectShortName">stall</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_riscv_top/uut/id_ex_branch" type="logic">
       <obj_property name="ElementShortName">id_ex_branch</obj_property>
       <obj_property name="ObjectShortName">id_ex_branch</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb_riscv_top/uut/ex_pc_branch" type="array">
-      <obj_property name="ElementShortName">ex_pc_branch[31:0]</obj_property>
-      <obj_property name="ObjectShortName">ex_pc_branch[31:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   <wvobject fp_name="/tb_riscv_top/uut/ex_branch_taken" type="logic">
+      <obj_property name="ElementShortName">ex_branch_taken</obj_property>
+      <obj_property name="ObjectShortName">ex_branch_taken</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb_riscv_top/uut/flush" type="logic">
-      <obj_property name="ElementShortName">flush</obj_property>
-      <obj_property name="ObjectShortName">flush</obj_property>
+   <wvobject fp_name="/tb_riscv_top/uut/flush_id_ex" type="logic">
+      <obj_property name="ElementShortName">flush_id_ex</obj_property>
+      <obj_property name="ObjectShortName">flush_id_ex</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_riscv_top/uut/flush_if_id" type="logic">
+      <obj_property name="ElementShortName">flush_if_id</obj_property>
+      <obj_property name="ObjectShortName">flush_if_id</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_riscv_top/uut/id_jump" type="logic">
+      <obj_property name="ElementShortName">id_jump</obj_property>
+      <obj_property name="ObjectShortName">id_jump</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_riscv_top/uut/c_lui" type="logic">
+      <obj_property name="ElementShortName">c_lui</obj_property>
+      <obj_property name="ObjectShortName">c_lui</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_riscv_top/uut/c_auipc" type="logic">
+      <obj_property name="ElementShortName">c_auipc</obj_property>
+      <obj_property name="ObjectShortName">c_auipc</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_riscv_top/uut/c_is_rtype" type="logic">
+      <obj_property name="ElementShortName">c_is_rtype</obj_property>
+      <obj_property name="ObjectShortName">c_is_rtype</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_riscv_top/uut/wb_write_data" type="array">
       <obj_property name="ElementShortName">wb_write_data[31:0]</obj_property>
@@ -120,13 +123,6 @@
    <wvobject fp_name="/tb_riscv_top/uut/id_rs2_data" type="array">
       <obj_property name="ElementShortName">id_rs2_data[31:0]</obj_property>
       <obj_property name="ObjectShortName">id_rs2_data[31:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_riscv_top/uut/hdu/id_ex_rd" type="array">
-      <obj_property name="ElementShortName">id_ex_rd[4:0]</obj_property>
-      <obj_property name="ObjectShortName">id_ex_rd[4:0]</obj_property>
-      <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
-      <obj_property name="CustomSignalColor">#FFFF00</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_riscv_top/uut/forward_a" type="array">
       <obj_property name="ElementShortName">forward_a[1:0]</obj_property>
@@ -209,11 +205,12 @@
    <wvobject fp_name="/tb_riscv_top/uut/regs/regs" type="array">
       <obj_property name="ElementShortName">regs[31:0][31:0]</obj_property>
       <obj_property name="ObjectShortName">regs[31:0][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="/tb_riscv_top/uut/dmem/mem" type="array">
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">mem[255:0][31:0]</obj_property>
-      <obj_property name="ObjectShortName">mem[255:0][31:0]</obj_property>
+      <obj_property name="ElementShortName">mem[0:255][31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem[0:255][31:0]</obj_property>
       <obj_property name="label">dmem[255:0][31:0]</obj_property>
    </wvobject>
 </wave_config>
